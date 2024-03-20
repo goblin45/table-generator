@@ -31,11 +31,11 @@ kernels = [
         [1, 1, 1]
     ],
     # center corner
-    [
-        [0, 1, 0],
-        [1, 1, 1],
-        [0, 1, 0]
-    ]
+    # [
+    #     [0, 1, 0],
+    #     [1, 1, 1],
+    #     [0, 1, 0]
+    # ]
 ]
 
 newImageArray = []
@@ -55,30 +55,35 @@ for i in range(len(newImageArray)):
     for row in range(rows): 
         for col in range(cols):
             if currImgArr[row][col] == 0:
-                corners.add((col, row))
+                breakFlag = False
+                for col1, row1 in corners:
+                    dist = np.sqrt((row1 - row) ** 2 + (col1 - col) ** 2)
+                    if dist < 4: 
+                        avgCol = (col + col1) // 2
+                        avgRow = (row + row1) // 2
+                        corners.add((avgCol, avgRow))
+                        corners.remove((col1, row1))
+                        breakFlag = True
+                        break
+                if not breakFlag:
+                    corners.add((col, row))
 
-refinedCorners = set()
-deletableCorners = set()
+# print(sorted(corners, key= lambda x: x[0]))
 
-for corner1 in corners: 
-    for corner2 in corners: 
-        if corner1 == corner2:
-            continue
-        col1, row1 = corner1
-        col2, row2 = corner2
-        dist = np.sqrt((row1 - row2) ** 2 + (col1 - col2) ** 2)
-        if dist < 5: 
-            deletableCorners.add(corner1)
-            deletableCorners.add(corner2)
-            avgRow = (row1 + row2) / 2
-            avgCol = (col1 + col2) / 2
-            newCorner = (avgCol, avgRow)
-            refinedCorners.add(newCorner)
-            print(corner1, "&", corner2, "changed into:", newCorner)
+filteredImgArr = []
 
-for corner in corners: 
-    if corner not in deletableCorners:  
-        refinedCorners.add(corner)
-        
-print("b")
-print(refinedCorners)
+for row in range(107):
+    temp = []
+    for col in range(180):
+        if (col, row) in corners:
+            temp.append(0)
+        else:
+            temp.append(255)
+    filteredImgArr.append(temp)
+
+filteredImage = np.uint8(filteredImgArr)
+height, width = filteredImage.shape
+resizedImage = cv.resize(filteredImage, (width * 2, height * 2))
+
+cv.imshow('result', resizedImage)
+cv.waitKey(0)
